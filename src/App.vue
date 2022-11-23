@@ -1,23 +1,45 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
-import HelloWorld from './components/HelloWorld.vue'
+import { read, utils } from 'xlsx'
+import { saveAs } from 'file-saver'
+import { ref } from 'vue'
 
-const test = 'ljiljl'
+interface President {
+  Name: string
+  Index: number
+}
+
+const outputJsonData = ref()
+
+async function handleChange(e: Event) {
+  const target = e.target! as HTMLInputElement
+  const fileList = target.files
+  if (!fileList)
+    return
+
+  const source = await fileList[0].arrayBuffer()
+
+  /* parse and load first worksheet */
+  const wb = read(source)
+  const data = utils.sheet_to_json<President>(wb.Sheets[wb.SheetNames[0]])
+  outputJsonData.value = data
+}
+
+function exportJsonFile() {
+  const fileName = 'myData.json'
+
+  // Create a blob of the data
+  const fileToSave = new Blob([JSON.stringify(outputJsonData.value)], {
+    type: 'application/json',
+  })
+
+  // Save the file
+  saveAs(fileToSave, fileName)
+}
 </script>
 
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Hello Vue 3 + TypeScript + Vite" />
+  <input type="file" @change="handleChange">
+  <button @click="exportJsonFile">
+    輸出成json
+  </button>
 </template>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
