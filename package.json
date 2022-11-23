@@ -21,6 +21,7 @@
     "@tailwindcss/line-clamp": "^0.4.2",
     "@tailwindcss/typography": "^0.5.8",
     "@types/file-saver": "^2.0.5",
+    "@types/wicg-file-system-access": "^2020.9.5",
     "@vitejs/plugin-vue": "^2.2.0",
     "autoprefixer": "^10.4.13",
     "eslint": "^8.28.0",
