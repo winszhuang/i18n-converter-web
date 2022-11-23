@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import Layout from './layout/Layout.vue'
 import SelectorTabs from './components/SelectorTabs.vue'
 import { TransformModeList } from './const/default'
 
 const mode = ref<Mode>(TransformModeList[0])
-
-watch(mode, (mode) => {
-  console.log(mode)
-})
 </script>
 
 <template>
@@ -28,5 +24,8 @@ watch(mode, (mode) => {
       />
     </section>
     <router-view />
+    <button class=" bg-orange-300 hover:bg-orange-400 text-xl rounded-lg border-2 border-black block w-full py-4 font-bold">
+      convert
+    </button>
   </Layout>
 </template>
