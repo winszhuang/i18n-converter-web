@@ -1,45 +1,32 @@
 <script setup lang="ts">
-import { read, utils } from 'xlsx'
-import { saveAs } from 'file-saver'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import Layout from './layout/Layout.vue'
+import SelectorTabs from './components/SelectorTabs.vue'
+import { TransformModeList } from './const/default'
 
-interface President {
-  Name: string
-  Index: number
-}
+const mode = ref<Mode>(TransformModeList[0])
 
-const outputJsonData = ref()
-
-async function handleChange(e: Event) {
-  const target = e.target! as HTMLInputElement
-  const fileList = target.files
-  if (!fileList)
-    return
-
-  const source = await fileList[0].arrayBuffer()
-
-  /* parse and load first worksheet */
-  const wb = read(source)
-  const data = utils.sheet_to_json<President>(wb.Sheets[wb.SheetNames[0]])
-  outputJsonData.value = data
-}
-
-function exportJsonFile() {
-  const fileName = 'myData.json'
-
-  // Create a blob of the data
-  const fileToSave = new Blob([JSON.stringify(outputJsonData.value)], {
-    type: 'application/json',
-  })
-
-  // Save the file
-  saveAs(fileToSave, fileName)
-}
+watch(mode, (mode) => {
+  console.log(mode)
+})
 </script>
 
 <template>
-  <input type="file" @change="handleChange">
-  <button @click="exportJsonFile">
-    輸出成json
-  </button>
+  <Layout>
+    <section class="mb-8">
+      <h4 class="mb-2 text-2xl">
+        Choose Mode
+      </h4>
+      <div class="pl-4 mb-3 border-l-2 border-black bg-slate-100">
+        <span class="font-bold ">jsonToExcel</span>  : trans all language json files to single xlsx file <br>
+        <span class="font-bold ">excelToJson</span> : trans single xlsx file to all language json files
+      </div>
+      <SelectorTabs
+        v-model:tabs="mode"
+        :tab-list="TransformModeList"
+        :with-route="true"
+      />
+    </section>
+    <router-view />
+  </Layout>
 </template>
