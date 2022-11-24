@@ -1,12 +1,20 @@
 <script lang="ts" setup>
+import { v4 as uuidv4 } from 'uuid'
 import type { WorkBook } from 'xlsx'
 import { read, utils } from 'xlsx'
 import { saveAs } from 'file-saver'
-import { ref, vModelCheckbox } from 'vue'
+import { computed, ref, vModelCheckbox } from 'vue'
+import { defaultLangItemList } from '../const/default'
 
 interface President {
   Name: string
   Index: number
+}
+
+interface LangKeyAndFolderName {
+  langKey: string
+  folderName: string
+  id: string
 }
 
 let directoryHandle: FileSystemDirectoryHandle | null
@@ -15,6 +23,20 @@ const inputFileRef = ref<HTMLElement>()
 const path = ref('')
 const chooseFileName = ref('')
 const outputFolderPath = ref('')
+const langList = ref([...defaultLangItemList])
+const isLangTableComplete = computed(() => langList.value.every(item => item.folderName && item.langKey))
+
+function addLang() {
+  langList.value.push({
+    langKey: '',
+    folderName: '',
+    id: uuidv4(),
+  })
+}
+
+function removeLangItem(id: string) {
+  langList.value = langList.value.filter(item => item.id !== id)
+}
 
 async function openFile() {
   try {
@@ -27,10 +49,10 @@ async function openFile() {
     if (wb.bookType !== 'xlsx')
       return alert('this file is not xlsx!! please select xlsx format file')
 
-    chooseFileName.value = fileHandler.name
     const canParse = checkSheetsHaveKeyField(wb)
     if (!canParse)
       return
+    chooseFileName.value = fileHandler.name
   }
   catch (error) {
     console.error((error as Error).message)
@@ -73,10 +95,14 @@ function checkSheetsHaveAllLang(workBook: WorkBook) {
 }
 
 function convert() {
-  if (!chooseFileName.value || !outputFolderPath.value) {
-    alert('required select file and target folder')
-    return
-  }
+  if (!chooseFileName.value)
+    return alert('required select file')
+
+  if (!isLangTableComplete.value)
+    return alert('please finish lang folder table')
+
+  if (!outputFolderPath.value)
+    return alert('required target folder')
 
   console.log('convert ite')
 }
@@ -121,9 +147,78 @@ async function handleDirectory() {
       </div>
     </div>
 
+    <!-- add lang folder -->
+    <h4 class="mt-8 mb-2 text-2xl">
+      Add Lang Folder
+    </h4>
+    <div class="pl-4 mb-3 border-l-2 border-black bg-slate-100">
+      程序會使用以下輸入的語系去做轉換
+    </div>
+    <table class="w-full border-2 border-separate border-black rounded-lg">
+      <tr class="divide-x-2 divide-black bg-emerald-300">
+        <th class="py-3 border-b-2 border-black" style="width: 40%">
+          Lang Key In Sheet
+        </th>
+        <th class="py-3 border-b-2 border-black">
+          output folder name
+        </th>
+        <th class="py-3 bg-red-300 border-b-2 border-black">
+          delete
+        </th>
+      </tr>
+      <template v-if="langList.length">
+        <tr
+          v-for="lang in langList"
+          :key="lang.id"
+          class="text-center divide-x-2 divide-black"
+        >
+          <td class="py-3 border-b-2 border-black">
+            <input
+              v-model="lang.langKey"
+              type="text"
+              class="w-full px-4 outline-none"
+              placeholder="Hindi"
+            >
+          </td>
+          <td class="py-3 border-b-2 border-black">
+            <input
+              v-model="lang.folderName"
+              type="text"
+              class="w-full px-4 outline-none"
+              placeholder="hi-in"
+            >
+          </td>
+          <td class="py-3 text-xl border-b-2 border-black">
+            <button class=" text-slate-500 hover:text-slate-800 active:text-slate-900" @click="removeLangItem(lang.id)">
+              X
+            </button>
+          </td>
+        </tr>
+      </template>
+      <template v-else>
+        <tr class="text-center divide-x-2 divide-black">
+          <td colspan="3" class="py-8 font-bold ">
+            no data
+          </td>
+        </tr>
+      </template>
+      <tfoot class="w-full">
+        <tr>
+          <td colspan="3">
+            <button
+              class="block w-full py-2 text-lg font-bold border-2 border-black rounded-lg bg-lime-300 active:bg-lime-500 hover:bg-lime-400"
+              @click="addLang"
+            >
+              add
+            </button>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+
     <!-- select target folder -->
     <h4 class="mt-8 mb-2 text-2xl">
-      Output folder
+      Output I18n folder
     </h4>
     <div class="pl-4 mb-3 border-l-2 border-black bg-slate-100">
       output file will export to this folder

@@ -10,6 +10,7 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.4",
     "file-saver": "^2.0.5",
+    "uuid": "^9.0.0",
     "vue": "^3.2.25",
     "vue-router": "^4.1.6",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
@@ -21,6 +22,7 @@
     "@tailwindcss/line-clamp": "^0.4.2",
     "@tailwindcss/typography": "^0.5.8",
     "@types/file-saver": "^2.0.5",
+    "@types/uuid": "^8.3.4",
     "@types/wicg-file-system-access": "^2020.9.5",
     "@vitejs/plugin-vue": "^2.2.0",
     "autoprefixer": "^10.4.13",
