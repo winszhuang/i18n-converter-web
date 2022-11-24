@@ -16,6 +16,7 @@ const mode = ref<Mode>(TransformModeList[0])
       <div class="pl-4 mb-3 border-l-2 border-black bg-slate-100">
         <span class="font-bold ">jsonToExcel</span>  : trans all language json files to single xlsx file <br>
         <span class="font-bold ">excelToJson</span> : trans single xlsx file to all language json files
+        <span class="font-bold ">autoKeyInExcel</span> : 為excel翻譯檔遺漏的key自動補上key
       </div>
       <SelectorTabs
         v-model:tabs="mode"

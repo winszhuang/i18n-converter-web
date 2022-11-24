@@ -12,6 +12,11 @@ export const routes: RouteRecordRaw[] = [
     name: 'JsonToExcel',
     component: () => import('./pages/JsonToExcel.vue'),
   },
+  {
+    path: '/AutoKeyInExcel',
+    name: 'AutoKeyInExcel',
+    component: () => import('./pages/AutoKeyInExcel.vue'),
+  },
 ]
 
 export const router = createRouter({

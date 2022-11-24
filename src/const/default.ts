@@ -10,6 +10,10 @@ export const TransformModeList = [
     key: 'excelToJson',
     value: TransformModeEnum.excelToJson,
   },
+  {
+    key: 'autoKeyInExcel',
+    value: TransformModeEnum.autoKeyInExcel,
+  },
 ]
 
 export const defaultLangItemList = [
