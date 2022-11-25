@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { v4 as uuidv4 } from 'uuid'
-import type { WorkBook } from 'xlsx'
+import type { WorkBook, WorkSheet } from 'xlsx'
 import { read, utils } from 'xlsx'
 import { saveAs } from 'file-saver'
 import { computed, ref, vModelCheckbox } from 'vue'
@@ -24,6 +24,7 @@ const path = ref('')
 const chooseFileName = ref('')
 const outputFolderPath = ref('')
 const langList = ref([...defaultLangItemList])
+const currentXlxsWorkBook = ref<WorkBook>()
 const isLangTableComplete = computed(() => langList.value.every(item => item.folderName && item.langKey))
 
 function addLang() {
@@ -36,6 +37,14 @@ function addLang() {
 
 function removeLangItem(id: string) {
   langList.value = langList.value.filter(item => item.id !== id)
+}
+
+function transLangKeyToFolderName(langKey: string) {
+  const langItem = langList.value.find(item => item.langKey === langKey)
+  if (!langItem)
+    return null
+
+  return langItem.folderName
 }
 
 async function openFile() {
@@ -52,6 +61,8 @@ async function openFile() {
     const canParse = checkSheetsHaveKeyField(wb)
     if (!canParse)
       return
+
+    currentXlxsWorkBook.value = wb
     chooseFileName.value = fileHandler.name
   }
   catch (error) {
@@ -90,21 +101,105 @@ function checkSheetsHaveKeyField(workBook: WorkBook) {
   return true
 }
 
-function checkSheetsHaveAllLang(workBook: WorkBook) {
-
-}
-
 function convert() {
   if (!chooseFileName.value)
     return alert('required select file')
 
-  if (!isLangTableComplete.value)
-    return alert('please finish lang folder table')
+  // if (!isLangTableComplete.value)
+  //   return alert('please finish lang folder table')
 
-  if (!outputFolderPath.value)
-    return alert('required target folder')
+  // if (!outputFolderPath.value)
+  //   return alert('required target folder')
 
-  console.log('convert ite')
+  parse()
+}
+
+/**
+ * 根據給定的langList產出如下格式obj
+ * {
+ *  'en': {},
+ *  'zh-tw': {},
+ *  'hi-in': {}
+ * }
+ */
+function generateLangObj() {
+  return langList.value.reduce((prev, curr) => {
+    prev[curr.folderName] = {}
+    return prev
+  }, {} as Record<string, Record<string, string>>)
+}
+
+function parse(wb = currentXlxsWorkBook.value) {
+  if (!wb)
+    return
+
+  for (const sheetName of wb.SheetNames) {
+    const sheet = wb.Sheets[sheetName]
+    const langObj = combineSheetToLangObj(sheet)
+    console.log(langObj)
+  }
+}
+
+/**
+ * 轉換單個sheet成一個json obj。格式如下
+ *
+ * {
+ *    bn: { GraphSetup: "গ্রাফ সেটআপ", Notice: "নোটিশ" },
+ *    en: { GraphSetup: "Graph Setup", Notice: "Notice" },
+ *    ...
+ * }
+ */
+function combineSheetToLangObj(sheet: WorkSheet) {
+  const langObj = generateLangObj()
+  const json = utils.sheet_to_json(sheet) as Array<Record<string, string>>
+
+  // rowData表示單行資料, e.g. { Key: 'Horse', EN: 'Horse', Hindi: 'हॉर्स रेसिंग' }
+  for (const rowData of json)
+    pushRowDataToLangObj(rowData, langObj)
+
+  return langObj
+}
+
+function generateRowKeyByWithEn(rowData: Record<string, string>) {
+  for (const [key, value] of Object.entries(rowData)) {
+    if (key.toLowerCase().includes('en'))
+      // 清除所有非英文或數字的符號
+      return value.replace(/\s+/g, '').replace(/[^0-9a-zA-Z]/g, '')
+
+    const isEnglishWord = value.replace(/\s+/g, '').match(/^([a-zA-Z])+$/)
+    if (isEnglishWord)
+      return value.replace(/\s+/g, '').replace(/[^0-9a-zA-Z]/g, '')
+  }
+  // 如果都抓不到key，就隨機生成亂碼來填key
+  return uuidv4()
+}
+
+function pushRowDataToLangObj(rowData: Record<string, string>, langObj: Record<string, Record<string, string>>) {
+  /** 當前翻譯的key */
+  const currentRowKey = getKeyByRowData(rowData) || generateRowKeyByWithEn(rowData)
+
+  Object.entries(rowData).forEach(([key, value]) => {
+    if (key.toLowerCase().includes('key'))
+      return
+
+    const folderName = transLangKeyToFolderName(key)
+    if (!folderName)
+      throw new Error(`不正確的語系名稱${key}`)
+
+    if (langObj[folderName!][currentRowKey!])
+      console.warn(`有存在的key: ${currentRowKey}`)
+
+    langObj[folderName!][currentRowKey!] = value
+  })
+}
+
+/** 取得當前翻譯行的對應Key */
+function getKeyByRowData(rowData: Record<string, string>) {
+  const index = Object.keys(rowData).findIndex(item => item.toLowerCase().includes('key'))
+  if (index === -1)
+    return null
+
+  return Object.values(rowData)[index]
 }
 
 function exportJsonFile() {
