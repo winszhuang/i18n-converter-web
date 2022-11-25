@@ -2,25 +2,11 @@
 import { v4 as uuidv4 } from 'uuid'
 import type { WorkBook, WorkSheet } from 'xlsx'
 import { read, utils } from 'xlsx'
-import { saveAs } from 'file-saver'
-import { computed, ref, vModelCheckbox } from 'vue'
+import { computed, ref } from 'vue'
 import { defaultLangItemList } from '../const/default'
-
-interface President {
-  Name: string
-  Index: number
-}
-
-interface LangKeyAndFolderName {
-  langKey: string
-  folderName: string
-  id: string
-}
 
 let directoryHandle: FileSystemDirectoryHandle | null
 const outputJsonData = ref()
-const inputFileRef = ref<HTMLElement>()
-const path = ref('')
 const chooseFileName = ref('')
 const outputFolderPath = ref('')
 const langList = ref([...defaultLangItemList])
@@ -105,11 +91,11 @@ function convert() {
   if (!chooseFileName.value)
     return alert('required select file')
 
-  // if (!isLangTableComplete.value)
-  //   return alert('please finish lang folder table')
+  if (!isLangTableComplete.value)
+    return alert('please finish lang folder table')
 
-  // if (!outputFolderPath.value)
-  //   return alert('required target folder')
+  if (!outputFolderPath.value)
+    return alert('required target folder')
 
   parse()
 }
@@ -129,14 +115,35 @@ function generateLangObj() {
   }, {} as Record<string, Record<string, string>>)
 }
 
-function parse(wb = currentXlxsWorkBook.value) {
+async function parse(wb = currentXlxsWorkBook.value) {
   if (!wb)
     return
 
-  for (const sheetName of wb.SheetNames) {
-    const sheet = wb.Sheets[sheetName]
-    const langObj = combineSheetToLangObj(sheet)
-    console.log(langObj)
+  try {
+    for (const sheetName of wb.SheetNames) {
+      const sheet = wb.Sheets[sheetName]
+      const langObj = combineSheetToLangObj(sheet)
+
+      for (const [langKeyOfFolderName, singleLangJson] of Object.entries(langObj)) {
+        // #NOTICE 迴圈內處理單個lang
+
+        /** 某語系的資料夾處理者 */
+        const langDirectoryHandler = await directoryHandle?.getDirectoryHandle(langKeyOfFolderName, {
+          create: true,
+        })
+
+        const currentSheetFileHandle = await langDirectoryHandler?.getFileHandle(`${sheetName}.json`, {
+          create: true,
+        })
+        const writable = await currentSheetFileHandle?.createWritable()
+        await writable?.write(JSON.stringify(singleLangJson))
+        await writable?.close()
+      }
+    }
+    alert('success!!')
+  }
+  catch (error) {
+    alert((error as Error).message)
   }
 }
 
@@ -202,19 +209,7 @@ function getKeyByRowData(rowData: Record<string, string>) {
   return Object.values(rowData)[index]
 }
 
-function exportJsonFile() {
-  const fileName = 'myData.json'
-
-  // Create a blob of the data
-  const fileToSave = new Blob([JSON.stringify(outputJsonData.value)], {
-    type: 'application/json',
-  })
-
-  // Save the file
-  saveAs(fileToSave, fileName)
-}
-
-async function handleDirectory() {
+async function openDirectory() {
   directoryHandle = await window.showDirectoryPicker()
   outputFolderPath.value = directoryHandle.name
 }
@@ -322,7 +317,7 @@ async function handleDirectory() {
       <button
         class="inline-block p-4 font-mono text-sm font-bold text-gray-900 border-2 border-black rounded-l-lg cursor-pointer focus:outline-none bg-slate-300 hover:bg-slate-700 hover:text-white"
         type="button"
-        @click="handleDirectory"
+        @click="openDirectory"
       >
         folder path
       </button>
