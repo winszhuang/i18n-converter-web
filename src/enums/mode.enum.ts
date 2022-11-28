@@ -1,5 +1,5 @@
 export enum TransformModeEnum {
-  jsonToExcel = 0,
-  excelToJson = 1,
+  excelToJson = 0,
+  jsonToExcel = 1,
   autoKeyInExcel = 2,
 }

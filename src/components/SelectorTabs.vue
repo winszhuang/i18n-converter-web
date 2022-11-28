@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Tab, TabGroup, TabList } from '@headlessui/vue'
 
 interface Option {
@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:tabs'])
 
+const route = useRoute()
 const router = useRouter()
 
 const selectedTab = ref(0)
@@ -41,6 +42,12 @@ const borderClass = computed(() =>
     return ''
   },
 )
+
+watch(() => route.name, (name) => {
+  const currentRoute = props.tabList.find(item => item.key.toLowerCase() === (name as string).toLowerCase())
+  if (currentRoute?.value !== selectedTab.value)
+    selectedTab.value = currentRoute!.value
+})
 </script>
 
 <template>

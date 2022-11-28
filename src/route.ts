@@ -3,6 +3,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const routes: RouteRecordRaw[] = [
   {
+    path: '',
+    redirect: { name: 'ExcelToJson' },
+  },
+  {
     path: '/ExcelToJson',
     name: 'ExcelToJson',
     component: () => import('./pages/ExcelToJson.vue'),
