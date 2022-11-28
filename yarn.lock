@@ -3150,6 +3150,11 @@ vue-eslint-parser@^9.0.1:
     lodash "^4.17.21"
     semver "^7.3.6"
 
+vue-loading-overlay@6.0:
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/vue-loading-overlay/-/vue-loading-overlay-6.0.2.tgz#69c844067d4344f72474f87f68020eb066763203"
+  integrity sha512-5GCvv6hPjNfHg+tKnLkk6yO/b/AdCCkdZb2dfrVFOuDyJz38dbm34k6oohVy/xIoFzPGsEEVtwCxq5G3RIYZ1Q==
+
 vue-router@^4.1.6:
   version "4.1.6"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-4.1.6.tgz#b70303737e12b4814578d21d68d21618469375a1"

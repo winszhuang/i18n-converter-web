@@ -3,10 +3,13 @@ import { v4 as uuidv4 } from 'uuid'
 import type { WorkBook, WorkSheet } from 'xlsx'
 import { read, utils } from 'xlsx'
 import { computed, ref } from 'vue'
+import Loading from 'vue-loading-overlay'
 import CheckBox from '../components/CheckBox.vue'
 import { defaultLangItemList } from '../const/default'
+import 'vue-loading-overlay/dist/css/index.css'
 
 let directoryHandle: FileSystemDirectoryHandle | null
+const isLoading = ref(false)
 const outputJsonData = ref()
 const chooseFileName = ref('')
 const outputFolderPath = ref('')
@@ -91,7 +94,7 @@ function checkSheetsHaveKeyField(workBook: WorkBook) {
   return true
 }
 
-function convert() {
+async function convert() {
   if (!chooseFileName.value)
     return alert('required select file')
 
@@ -101,7 +104,9 @@ function convert() {
   if (!outputFolderPath.value)
     return alert('required target folder')
 
-  parse()
+  isLoading.value = true
+  await parse()
+  isLoading.value = false
 }
 
 /**
@@ -235,6 +240,10 @@ async function openDirectory() {
 </script>
 
 <template>
+  <Loading
+    v-model:active="isLoading"
+    :is-full-page="true"
+  />
   <section class="relative mb-8">
     <h4 class="mb-2 text-2xl">
       Choose Excel File
