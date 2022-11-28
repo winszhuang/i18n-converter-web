@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import type { WorkBook, WorkSheet } from 'xlsx'
 import { read, utils } from 'xlsx'
 import { computed, ref } from 'vue'
+import CheckBox from '../components/CheckBox.vue'
 import { defaultLangItemList } from '../const/default'
 
 let directoryHandle: FileSystemDirectoryHandle | null
@@ -11,6 +12,9 @@ const chooseFileName = ref('')
 const outputFolderPath = ref('')
 const langList = ref([...defaultLangItemList])
 const currentXlxsWorkBook = ref<WorkBook>()
+const convertSetting = ref({
+  updateI18nFile: false,
+})
 const isLangTableComplete = computed(() => langList.value.every(item => item.folderName && item.langKey))
 
 function addLang() {
@@ -135,8 +139,23 @@ async function parse(wb = currentXlxsWorkBook.value) {
         const currentSheetFileHandle = await langDirectoryHandler?.getFileHandle(`${sheetName}.json`, {
           create: true,
         })
+
+        const originalFile = await currentSheetFileHandle?.getFile()
+        if (originalFile?.type !== 'application/json')
+          throw new Error('updated file should be json format!!')
+
+        const originalString = await originalFile?.text()
+        const originalJson = originalString
+          ? JSON.parse(originalString)
+          : {}
+
+        const updatedJson = {
+          ...originalJson,
+          ...singleLangJson,
+        }
+
         const writable = await currentSheetFileHandle?.createWritable()
-        await writable?.write(JSON.stringify(singleLangJson))
+        await writable?.write(JSON.stringify(updatedJson, null, 2))
         await writable?.close()
       }
     }
@@ -325,6 +344,21 @@ async function openDirectory() {
         {{ outputFolderPath }}
       </div>
     </div>
+
+    <!-- convert setting -->
+    <h4 class="mt-8 mb-2 text-2xl">
+      Convert Setting
+    </h4>
+    <div class="pl-4 mb-3 border-l-2 border-black bg-slate-100">
+      Determine output results based on convert settings
+    </div>
+    <div class="p-4 mb-8 font-mono text-sm font-bold text-gray-900 border-2 border-black rounded-l-lg cursor-pointerbg-slate-300">
+      <CheckBox
+        v-model:enabled="convertSetting.updateI18nFile"
+        text="update to exist i18n file"
+      />
+    </div>
+
     <button
       class="block w-full py-4 text-xl font-bold bg-orange-300 border-2 border-black rounded-lg active:bg-orange-500 hover:bg-orange-400"
       @click="convert"
