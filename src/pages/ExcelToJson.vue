@@ -7,6 +7,7 @@ import Loading from 'vue-loading-overlay'
 import CheckBox from '../components/CheckBox.vue'
 import { defaultLangItemList } from '../const/default'
 import 'vue-loading-overlay/dist/css/index.css'
+import { updateObj } from '../utils/index'
 
 let directoryHandle: FileSystemDirectoryHandle | null
 const isLoading = ref(false)
@@ -220,7 +221,7 @@ function pushRowDataToLangObj(rowData: Record<string, string>, langObj: Record<s
     if (langObj[folderName!][currentRowKey!])
       console.warn(`有存在的key: ${currentRowKey}`)
 
-    langObj[folderName!][currentRowKey!] = value
+    langObj[folderName!] = updateObj(langObj[folderName!], currentRowKey, value)
   })
 }
 
