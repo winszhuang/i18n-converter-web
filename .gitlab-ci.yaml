@@ -1,11 +1,19 @@
-image: alpine:latest
-
+image: node:16.5.0
 pages:
   stage: deploy
+  cache:
+    key:
+      files:
+        - yarn-lock
+      prefix: yarn
+    paths:
+      - node_modules/
   script:
-  - echo 'Nothing to do...'
+    - yarn install
+    - yarn build
+    - cp -a dist/. public/
   artifacts:
     paths:
-    - public
-  only:
-  - master
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
