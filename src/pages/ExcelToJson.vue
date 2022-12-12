@@ -130,46 +130,53 @@ async function parse(wb = currentXlxsWorkBook.value) {
     return
 
   try {
-    for (const sheetName of wb.SheetNames) {
+    // 此處迴圈並沒有要等一圈跑完再跑下一圈，所以用forEach
+    wb.SheetNames.forEach(async (sheetName) => {
       const sheet = wb.Sheets[sheetName]
       const langObj = combineSheetToLangObj(sheet)
 
-      for (const [langKeyOfFolderName, singleLangJson] of Object.entries(langObj)) {
-        // #NOTICE 迴圈內處理單個lang
+      await Promise.all(
+        Object.entries(langObj)
+          .map(([langKeyOfFolderName, singleLangJson]) => parseSingleLangJson(langKeyOfFolderName, singleLangJson, sheetName)),
+      )
+    })
 
-        /** 某語系的資料夾處理者 */
-        const langDirectoryHandler = await directoryHandle?.getDirectoryHandle(langKeyOfFolderName, {
-          create: true,
-        })
-
-        const currentSheetFileHandle = await langDirectoryHandler?.getFileHandle(`${sheetName}.json`, {
-          create: true,
-        })
-
-        const originalFile = await currentSheetFileHandle?.getFile()
-        if (originalFile?.type !== 'application/json')
-          throw new Error('updated file should be json format!!')
-
-        const originalString = await originalFile?.text()
-        const originalJson = originalString
-          ? JSON.parse(originalString)
-          : {}
-
-        const updatedJson = {
-          ...originalJson,
-          ...singleLangJson,
-        }
-
-        const writable = await currentSheetFileHandle?.createWritable()
-        await writable?.write(JSON.stringify(updatedJson, null, 2))
-        await writable?.close()
-      }
-    }
     alert('success!!')
   }
   catch (error) {
     alert((error as Error).message)
   }
+}
+
+async function parseSingleLangJson(langKeyOfFolderName: string, singleLangJson: Record<string, string>, sheetName: string) {
+  // #NOTICE 迴圈內處理單個lang
+
+  /** 某語系的資料夾處理者 */
+  const langDirectoryHandler = await directoryHandle?.getDirectoryHandle(langKeyOfFolderName, {
+    create: true,
+  })
+
+  const currentSheetFileHandle = await langDirectoryHandler?.getFileHandle(`${sheetName}.json`, {
+    create: true,
+  })
+
+  const originalFile = await currentSheetFileHandle?.getFile()
+  if (originalFile?.type !== 'application/json')
+    throw new Error('updated file should be json format!!')
+
+  const originalString = await originalFile?.text()
+  const originalJson = originalString
+    ? JSON.parse(originalString)
+    : {}
+
+  const updatedJson = {
+    ...originalJson,
+    ...singleLangJson,
+  }
+
+  const writable = await currentSheetFileHandle?.createWritable()
+  await writable?.write(JSON.stringify(updatedJson, null, 2))
+  await writable?.close()
 }
 
 /**
